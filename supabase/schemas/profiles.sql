@@ -15,8 +15,8 @@ create table public.profiles (
 alter table public.profiles
   enable row level security;
 
-create policy "Public profiles are viewable by everyone." on public.profiles
-  for select using (true);
+create policy "Users can view their own profile." on public.profiles
+  for select using (auth.uid() = id);
 
 create policy "Users can insert their own profile." on public.profiles
   for insert with check (auth.uid() = id);
@@ -36,10 +36,6 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
-
--- Set up Storage!
-insert into storage.buckets (id, name)
-  values ('avatars', 'avatars');
 
 -- Set up access controls for storage.
 -- See https://supabase.com/docs/guides/storage#policy-examples
