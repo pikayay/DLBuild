@@ -20,6 +20,15 @@ export default async function Home() {
               <Link href="/dashboard" className="text-blue-500 hover:underline">
                 Go to Dashboard
               </Link>
+              <Link href="/items" className="text-blue-500 hover:underline">
+                Items
+              </Link>
+              <Link href="/builds" className="text-blue-500 hover:underline">
+                Builds
+              </Link>
+              <Link href="/heroes" className="text-blue-500 hover:underline">
+                Heroes
+              </Link>
               <SignOutButton />
             </div>
           ) : (

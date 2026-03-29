@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import SignOutButton from '@/app/components/SignOutButton'
 
-export default async function DashboardPage() {
+export default async function HeroesPage() {
   const supabase = await createSupabaseServerClient()
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -15,21 +15,12 @@ export default async function DashboardPage() {
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
       <main className="flex flex-col items-center justify-center w-full flex-1 px-20 text-center">
         <h1 className="text-4xl font-bold mb-8">
-          Dashboard
+          Heroes
         </h1>
         <p className="mb-4">Welcome, {session.user.email}</p>
         <div className="flex gap-4">
           <Link href="/profile" className="text-blue-500 hover:underline">
             Go to Profile
-          </Link>
-          <Link href="/items" className="text-blue-500 hover:underline">
-            Items
-          </Link>
-          <Link href="/builds" className="text-blue-500 hover:underline">
-            Builds
-          </Link>
-          <Link href="/heroes" className="text-blue-500 hover:underline">
-            Heroes
           </Link>
           <SignOutButton />
         </div>

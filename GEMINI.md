@@ -1,4 +1,66 @@
-# Gemini Development Guidelines for Starter App
+# Gemini Development Guidelines for Deadlock Build App
+
+This document outlines the guidelines and context for the Gemini AI agent while working on this project. Adhering to these principles will ensure consistency, quality, and alignment with the project's goals.
+
+## 1. Project Core Objective
+
+The primary goal is to create a data-driven web application for the game *Deadlock*. The app will empower players to craft, analyze, and share item builds. The user experience should be intuitive for theory-crafters and visually aligned with the game's aesthetic.
+
+When in doubt about the purpose of a feature, refer back to the core objective: **Does this help a player make better build decisions or understand the game's items and heroes more deeply?**
+
+## 2. Technical Stack & Conventions
+
+This project uses a specific set of technologies. Please adhere to them strictly. Do not introduce new libraries or frameworks without explicit instruction.
+
+*   **Frontend:** React / Next.js (TypeScript)
+*   **Styling:** Tailwind CSS (as is common with Next.js) and **Framer Motion** for animations. The visual identity should be a priority, reflecting the *Deadlock* game's art style.
+*   **Data Visualization:** Use a library like **D3.js** for creating charts and graphs for item/hero statistics.
+*   **Backend & Database:** **Supabase** will be used for the PostgreSQL database and user authentication.
+*   **Background Jobs:** **BullMQ** with Redis for scheduled tasks like sending emails.
+*   **LLM Integration:** **Google AI Studio** for specific, contained features like summarizing community sentiment.
+
+**Coding Style:**
+*   Follow existing code style and conventions.
+*   Use TypeScript for all new components and logic.
+*   Write functional components with React Hooks.
+
+## 3. Key Project Considerations
+
+### API Instability
+
+The *Deadlock* game API is for a game in early alpha and is subject to frequent changes and potential instability.
+
+*   **Defensive Coding:** All API calls must have robust error handling. The UI should gracefully handle API failures, perhaps by displaying a message to the user or falling back to cached/static data where possible.
+*   **Data Caching/Fallback:** For critical data (like item lists), consider creating local fallbacks or a caching mechanism to ensure the app remains usable even if the API is down.
+*   **Modular API Service:** Encapsulate all API-related logic in a dedicated service module. This will make it easier to update when the API changes.
+
+## 4. Development Workflow
+
+1.  **Consult `STRUCTURE.md`:** Review this file for the high-level design of the website and page structure.
+2.  **Understand the Goal:** Before writing code, understand the feature's purpose from `PROPOSAL.md`.
+3.  **Plan the Implementation:** Briefly outline the components, state management, and data flow.
+4.  **Write Tests:** For complex logic (e.g., build calculations, API data transformation), write unit tests.
+5.  **Implement the Feature:** Write the code, adhering to the tech stack and style guidelines.
+6.  **Verify:** Test the feature manually and run any existing automated tests.
+
+## 5. Specific Instructions
+
+*   When adding new features or pages, ensure they are linked from the main navigation or relevant sections of the app.
+*   When adding new dependencies, use `npm install`.
+*   Prioritize a polished and visually appealing UI. Use Framer Motion to add meaningful animations that enhance the user experience, not just for decoration.
+*   For any new file, especially components, follow the naming and organizational structure of the existing `app/` directory.
+
+
+
+
+
+
+
+
+
+# STARTER APP (COMPLETED) DOCUMENT BELOW
+
+# Gemini Development Guidelines for Starter App (COMPLETED)
 
 This document provides rules and guidelines for developing the Next.js + Supabase starter application. Adhering to these conventions ensures consistency, maintainability, and alignment with the project's goals.
 
