@@ -57,8 +57,8 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   const { pathname } = request.nextUrl
-  if (!session && (pathname.startsWith('/dashboard') || pathname.startsWith('/profile'))) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (!session && (pathname.startsWith('/dashboard') || pathname.startsWith('/profile') || pathname.startsWith('/deadlock'))) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
 
