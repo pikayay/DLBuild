@@ -8,9 +8,12 @@ All notable changes to this project will be documented in this file.
 - Created the Deadlock app, a build-crafting app for the game Deadlock.
 - Created `items`, `builds`, and `heroes` pages.
 - Created a new layout for the Deadlock pages with a sidebar and animations.
-- Created a placeholder API client for items, builds, and heroes.
+- Integrated the [Deadlock Assets API](https://assets.deadlock-api.com/) for items: `getItems()` calls `GET /v2/items` with `language=english`, typed `DeadlockItem` models (ability, weapon, upgrade), helpers for image URLs and plain-text description snippets, and structured error handling in `lib/deadlock-api.ts`.
+- Configured Next.js `images.remotePatterns` for `assets-bucket.deadlock-api.com` and `assets.deadlock-api.com` so item icons load through `next/image`.
+- Placeholder API helpers for builds and heroes in `lib/deadlock-api.ts` (unchanged behavior).
 
 ### Changed
+- Items page lists all API items in a grid with name, internal class name, type badge, optional description snippet, and upgrade-only fields (cost, slot, tier, shopable). Fetches use `cache: 'no-store'` because the full items payload exceeds Next.js’s fetch data cache size limit, so the route is dynamically rendered.
 - Updated the homepage to be more relevant to the Deadlock app.
 - Updated the middleware to redirect unauthenticated users to the homepage.
 - Updated the title and description of the app.
