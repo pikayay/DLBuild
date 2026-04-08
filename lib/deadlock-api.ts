@@ -3,6 +3,9 @@
  * @see https://assets.deadlock-api.com/scalar
  */
 
+import { cache } from 'react'
+import { itemDisplayNameToSlug } from '@/lib/deadlock-item-slug'
+
 const ASSETS_API_BASE = 'https://assets.deadlock-api.com'
 
 /** Query param accepted by the API for English strings. */
@@ -77,10 +80,38 @@ export interface Build {
   description: string
 }
 
-export interface Hero {
-  id: string
+/** Hero roster entry from `GET /v2/heroes` (Assets API). */
+export interface HeroDescriptionV2 {
+  lore?: string | null
+  role?: string | null
+  playstyle?: string | null
+}
+
+export interface HeroImagesV2 {
+  icon_hero_card?: string | null
+  icon_hero_card_webp?: string | null
+  icon_image_small?: string | null
+  icon_image_small_webp?: string | null
+}
+
+export interface HeroV2 {
+  id: number
+  class_name: string
   name: string
-  description: string
+  description: HeroDescriptionV2
+  player_selectable: boolean
+  disabled: boolean
+  in_development?: boolean
+  tags?: string[] | null
+  gun_tag?: string | null
+  hero_type?: string | null
+  complexity?: number
+  images: HeroImagesV2
+}
+
+export interface HeroesFetchResult {
+  heroes: HeroV2[]
+  error: string | null
 }
 
 function stripTags(html: string): string {
@@ -146,47 +177,97 @@ export function getItemTypeLabel(type: DeadlockItemType): string {
   return typeLabel[type]
 }
 
-/** Fetches shop upgrade items only (`GET /v2/items/by-type/upgrade`). */
-export async function getItems(): Promise<ItemsFetchResult> {
-  const url = new URL(`${ASSETS_API_BASE}/v2/items/by-type/upgrade`)
-  url.searchParams.set('language', DEFAULT_LANGUAGE)
+export interface ShopItemBySlugResult {
+  item: UpgradeItemV2 | null
+  error: string | null
+}
 
-  try {
-    const res = await fetch(url.toString(), {
-      cache: 'no-store',
-      headers: { Accept: 'application/json' },
-    })
+/**
+ * One fetch per RSC request; shared by the items list and detail routes.
+ * Detail URLs use {@link itemDisplayNameToSlug} on `item.name` (not `class_name`).
+ */
+export const getShopUpgradeItemsCached = cache(
+  async (): Promise<{ items: UpgradeItemV2[]; error: string | null }> => {
+    const url = new URL(`${ASSETS_API_BASE}/v2/items/by-type/upgrade`)
+    url.searchParams.set('language', DEFAULT_LANGUAGE)
 
-    if (!res.ok) {
+    try {
+      const res = await fetch(url.toString(), {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      })
+
+      if (!res.ok) {
+        return {
+          items: [],
+          error: `Deadlock API returned ${res.status} ${res.statusText}`,
+        }
+      }
+
+      const data: unknown = await res.json()
+      if (!Array.isArray(data)) {
+        return { items: [], error: 'Unexpected response from Deadlock API' }
+      }
+
+      const items = data
+        .filter(
+          (row): row is UpgradeItemV2 =>
+            typeof row === 'object' &&
+            row !== null &&
+            (row as UpgradeItemV2).type === 'upgrade',
+        )
+        .filter((item) => item.shopable)
+      items.sort((a, b) => a.name.localeCompare(b.name))
+
+      return { items, error: null }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown error'
       return {
         items: [],
-        error: `Deadlock API returned ${res.status} ${res.statusText}`,
+        error: `Could not load items: ${message}`,
       }
     }
+  },
+)
 
-    const data: unknown = await res.json()
-    if (!Array.isArray(data)) {
-      return { items: [], error: 'Unexpected response from Deadlock API' }
-    }
+/** Fetches shopable upgrade items only (`GET /v2/items/by-type/upgrade`). */
+export async function getItems(): Promise<ItemsFetchResult> {
+  return getShopUpgradeItemsCached()
+}
 
-    const items = data
-      .filter(
-        (row): row is UpgradeItemV2 =>
-          typeof row === 'object' &&
-          row !== null &&
-          (row as UpgradeItemV2).type === 'upgrade',
-      )
-      .filter((item) => item.shopable)
-    items.sort((a, b) => a.name.localeCompare(b.name))
+/** Resolve a single shop item from the display-name URL slug (e.g. `extended_magazine`). */
+export async function getShopItemBySlug(
+  slug: string,
+): Promise<ShopItemBySlugResult> {
+  const decoded = decodeURIComponent(slug).trim()
+  const normalized = itemDisplayNameToSlug(decoded)
 
-    return { items, error: null }
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'Unknown error'
-    return {
-      items: [],
-      error: `Could not load items: ${message}`,
-    }
+  const { items, error } = await getShopUpgradeItemsCached()
+  if (error) return { item: null, error }
+
+  const item =
+    items.find((i) => itemDisplayNameToSlug(i.name) === normalized) ?? null
+  return { item, error: null }
+}
+
+/** Stripped plain-text blocks from upgrade tooltip fields (for detail pages). */
+export function getUpgradeDescriptionBlocks(
+  item: UpgradeItemV2,
+): { label: string; text: string }[] {
+  const d = item.description
+  if (!d) return []
+
+  const blocks: { label: string; text: string }[] = []
+  const push = (label: string, raw: string | null | undefined) => {
+    const t = raw ? stripTags(raw).trim() : ''
+    if (t) blocks.push({ label, text: t })
   }
+
+  push('Overview', d.desc)
+  push('Overview', d.desc2)
+  push('Passive', d.passive)
+  push('Active', d.active)
+  return blocks
 }
 
 export async function getBuilds(): Promise<Build[]> {
@@ -197,10 +278,62 @@ export async function getBuilds(): Promise<Build[]> {
   ]
 }
 
-export async function getHeroes(): Promise<Hero[]> {
-  return [
-    { id: '1', name: 'Hero 1', description: 'This is the first hero.' },
-    { id: '2', name: 'Hero 2', description: 'This is the second hero.' },
-    { id: '3', name: 'Hero 3', description: 'This is the third hero.' },
-  ]
+export function getHeroPortraitUrl(hero: HeroV2): string | null {
+  return (
+    hero.images?.icon_hero_card_webp ||
+    hero.images?.icon_hero_card ||
+    hero.images?.icon_image_small_webp ||
+    hero.images?.icon_image_small ||
+    null
+  )
+}
+
+/**
+ * All heroes from `GET /v2/heroes`, deduped per request (for list + future detail routes).
+ */
+export const getHeroesFromApiCached = cache(
+  async (): Promise<{ heroes: HeroV2[]; error: string | null }> => {
+    const url = new URL(`${ASSETS_API_BASE}/v2/heroes`)
+    url.searchParams.set('language', DEFAULT_LANGUAGE)
+
+    try {
+      const res = await fetch(url.toString(), {
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      })
+
+      if (!res.ok) {
+        return {
+          heroes: [],
+          error: `Deadlock API returned ${res.status} ${res.statusText}`,
+        }
+      }
+
+      const data: unknown = await res.json()
+      if (!Array.isArray(data)) {
+        return { heroes: [], error: 'Unexpected response from Deadlock API' }
+      }
+
+      return { heroes: data as HeroV2[], error: null }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown error'
+      return {
+        heroes: [],
+        error: `Could not load heroes: ${message}`,
+      }
+    }
+  },
+)
+
+/**
+ * Playable roster: selectable in-game and not disabled (matches typical PvP lineup).
+ */
+export async function getHeroes(): Promise<HeroesFetchResult> {
+  const { heroes, error } = await getHeroesFromApiCached()
+  if (error) return { heroes: [], error }
+
+  const playable = heroes.filter((h) => h.player_selectable && !h.disabled)
+  playable.sort((a, b) => a.name.localeCompare(b.name))
+
+  return { heroes: playable, error: null }
 }

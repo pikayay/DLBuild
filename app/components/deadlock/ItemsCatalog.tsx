@@ -2,25 +2,23 @@
 
 import { motion } from 'framer-motion'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useState } from 'react'
 import {
   getItemDescriptionSnippet,
   getItemImageUrl,
   type UpgradeItemV2,
 } from '@/lib/deadlock-api'
-import { buildSlotCostCatalog, type SlotGroup } from '@/lib/deadlock-item-groups'
+import { itemDetailHref } from '@/lib/deadlock-item-slug'
+import {
+  buildSlotCostCatalog,
+  resolveSlotTheme,
+  type SlotGroup,
+  type SlotTheme,
+} from '@/lib/deadlock-item-groups'
 
 function formatSouls(n: number): string {
   return `${n.toLocaleString()} souls`
-}
-
-type SlotTheme = 'spirit' | 'weapon' | 'vitality' | 'default'
-
-function resolveSlotTheme(slot: string): SlotTheme {
-  if (slot === 'spirit') return 'spirit'
-  if (slot === 'weapon') return 'weapon'
-  if (slot === 'vitality') return 'vitality'
-  return 'default'
 }
 
 /** Outer ring + panel for each main slot (Spirit / Weapon / Vitality). */
@@ -326,9 +324,14 @@ function UpgradeMeta({ item }: { item: UpgradeItemV2 }) {
 function ItemCard({ item }: { item: UpgradeItemV2 }) {
   const img = getItemImageUrl(item)
   const snippet = getItemDescriptionSnippet(item)
+  const href = itemDetailHref(item.name)
 
   return (
-    <li className="flex gap-4 rounded-lg border border-zinc-200/90 bg-white/95 p-4 text-left shadow-sm backdrop-blur-sm dark:border-zinc-600/80 dark:bg-zinc-950/70">
+    <li className="flex gap-4 rounded-lg border border-zinc-200/90 bg-white/95 text-left shadow-sm backdrop-blur-sm transition-shadow hover:shadow-md dark:border-zinc-600/80 dark:bg-zinc-950/70">
+      <Link
+        href={href}
+        className="flex min-w-0 flex-1 gap-4 p-4 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-violet-500 dark:ring-offset-zinc-950"
+      >
       <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800">
         {img ? (
           <Image
@@ -356,6 +359,7 @@ function ItemCard({ item }: { item: UpgradeItemV2 }) {
         )}
         <UpgradeMeta item={item} />
       </div>
+      </Link>
     </li>
   )
 }

@@ -1,5 +1,14 @@
 import type { UpgradeItemV2 } from '@/lib/deadlock-api'
 
+export type SlotTheme = 'spirit' | 'weapon' | 'vitality' | 'default'
+
+export function resolveSlotTheme(slot: string): SlotTheme {
+  if (slot === 'spirit') return 'spirit'
+  if (slot === 'weapon') return 'weapon'
+  if (slot === 'vitality') return 'vitality'
+  return 'default'
+}
+
 /** Primary slot group order for the catalog UI. */
 export const SLOT_ORDER = ['spirit', 'weapon', 'vitality'] as const
 
