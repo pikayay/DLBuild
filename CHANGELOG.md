@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added the Deadlock Minimap page at `/deadlock/minimap`.
 - Created the Deadlock app, a build-crafting app for the game Deadlock.
 - Created `items`, `builds`, and `heroes` pages.
 - Created a new layout for the Deadlock pages with a sidebar and animations.
