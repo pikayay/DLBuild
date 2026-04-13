@@ -21,12 +21,16 @@ export default async function BuildsPage() {
         </div>
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl w-full text-left">
           {builds.map((build: Build) => (
-            <li key={build.id} className="p-4 border rounded-lg">
-              <h2 className="text-xl font-bold">{build.name}</h2>
-              <p>{build.description}</p>
-              <div className="mt-2 text-xs font-semibold text-zinc-500">
-                {build.published ? 'Published' : 'Draft'}
-              </div>
+            <li key={build.id}>
+              <Link href={`/deadlock/builds/${build.id}`} className="block p-4 border rounded-lg hover:border-violet-500 transition-colors">
+                <h2 className="text-xl font-bold">{build.name}</h2>
+                <p className="text-zinc-600 dark:text-zinc-400 line-clamp-2">{build.description}</p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-zinc-500">
+                    {build.published ? 'Published' : 'Draft'}
+                  </span>
+                </div>
+              </Link>
             </li>
           ))}
         </ul>

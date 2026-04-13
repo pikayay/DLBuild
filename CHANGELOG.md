@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added individual build pages at `/deadlock/builds/[id]`.
+- Updated the builds list page to link to individual builds.
+- Added ability for build owners to edit and update their existing builds.
 - Added individual hero detail pages at `/deadlock/heroes/[heroSlug]` showing portrait, tags, overview, playstyle, and lore.
 - Updated the Heroes catalog to link to the new hero detail pages.
 - Added the Deadlock Minimap page at `/deadlock/minimap`.

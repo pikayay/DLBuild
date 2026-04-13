@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { UpgradeItemV2, HeroV2, getItemImageUrl, getItemDescriptionSnippet } from '@/lib/deadlock-api'
-import { createBuild } from '@/app/(main)/deadlock/builds/actions'
+import { createBuild, updateBuild } from '@/app/(main)/deadlock/builds/actions'
 import {
   buildSlotCostCatalog,
   resolveSlotTheme,
@@ -13,11 +13,11 @@ import {
 } from '@/lib/deadlock-item-groups'
 
 const BUILD_SECTIONS = [
-  { id: 'lane', name: 'Lane', description: 'Order is flexible depending on needs.' },
-  { id: 'lane-optional', name: 'Lane Optional', description: 'Generally a good idea to get at least one.' },
+  { id: 'lane', name: 'Lane', description: 'Play to your power spikes and min-max trades.' },
+  { id: 'lane-optional', name: 'Lane Optional', description: 'Pick depending on how the lane is going.' },
   { id: 'mid', name: 'Postlane/Mid Game', description: 'General game plan for mid game.' },
-  { id: 'late', name: 'Late', description: 'Finish your build with counter items.' },
-  { id: 'situational', name: 'Situational', description: 'Everything annotated.' },
+  { id: 'late', name: 'Late', description: 'Finish your build with capstone 6ks.' },
+  { id: 'situational', name: 'Situational', description: 'Counters, flex items, etc.' },
 ]
 
 const themeColors: Record<SlotTheme, string> = {
@@ -412,16 +412,33 @@ function SelectableItemCard({ item, onClick }: { item: UpgradeItemV2; onClick: (
   )
 }
 
-export function BuildCreator({ items, heroes }: { items: UpgradeItemV2[], heroes: HeroV2[] }) {
+export function BuildCreator({
+  items,
+  heroes,
+  initialBuild,
+  isOwner = true,
+}: {
+  items: UpgradeItemV2[]
+  heroes: HeroV2[]
+  initialBuild?: {
+    id: string;
+    hero_id: number;
+    name: string;
+    description: string;
+    items: Record<string, UpgradeItemV2[]>;
+    published: boolean;
+  }
+  isOwner?: boolean
+}) {
   const router = useRouter()
   const [activeSectionId, setActiveSectionId] = useState<string>(BUILD_SECTIONS[0].id)
   const [buildItems, setBuildItems] = useState<Record<string, UpgradeItemV2[]>>(
-    BUILD_SECTIONS.reduce((acc, sec) => ({ ...acc, [sec.id]: [] }), {})
+    initialBuild?.items || BUILD_SECTIONS.reduce((acc, sec) => ({ ...acc, [sec.id]: [] }), {})
   )
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [heroId, setHeroId] = useState<number | ''>('')
-  const [published, setPublished] = useState(false)
+  const [name, setName] = useState(initialBuild?.name || '')
+  const [description, setDescription] = useState(initialBuild?.description || '')
+  const [heroId, setHeroId] = useState<number | ''>(initialBuild?.hero_id || '')
+  const [published, setPublished] = useState(initialBuild?.published || false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -452,19 +469,23 @@ export function BuildCreator({ items, heroes }: { items: UpgradeItemV2[], heroes
     setIsSaving(true)
     setError(null)
 
-    const result = await createBuild({
+    const payload = {
       hero_id: heroId,
       name,
       description,
       items: buildItems,
       published,
-    })
+    }
+
+    const result = initialBuild
+      ? await updateBuild(initialBuild.id, payload)
+      : await createBuild(payload)
 
     if (result.error) {
       setError(result.error)
       setIsSaving(false)
     } else {
-      router.push('/deadlock/builds')
+      router.push(`/deadlock/builds`)
     }
   }
 
@@ -489,9 +510,10 @@ export function BuildCreator({ items, heroes }: { items: UpgradeItemV2[], heroes
               id="build-name"
               type="text"
               value={name}
+              disabled={!isOwner}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Unkillable Infernus"
-              className="rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+              className="rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
             />
           </div>
           
@@ -500,8 +522,9 @@ export function BuildCreator({ items, heroes }: { items: UpgradeItemV2[], heroes
             <select
               id="build-hero"
               value={heroId}
+              disabled={!isOwner}
               onChange={(e) => setHeroId(e.target.value === '' ? '' : Number(e.target.value))}
-              className="rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+              className="rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
             >
               <option value="">Select a hero...</option>
               {heroes.map((hero) => (
@@ -518,22 +541,25 @@ export function BuildCreator({ items, heroes }: { items: UpgradeItemV2[], heroes
               id="build-desc"
               rows={3}
               value={description}
+              disabled={!isOwner}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Explain how to play this build..."
-              className="rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+              className="rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
             />
           </div>
 
-          <div className="sm:col-span-2 flex items-center gap-2">
-            <input
-              id="build-published"
-              type="checkbox"
-              checked={published}
-              onChange={(e) => setPublished(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-600 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-offset-zinc-950"
-            />
-            <label htmlFor="build-published" className="text-sm text-zinc-700 dark:text-zinc-300">Publish this build (visible to others)</label>
-          </div>
+          {isOwner && (
+            <div className="sm:col-span-2 flex items-center gap-2">
+              <input
+                id="build-published"
+                type="checkbox"
+                checked={published}
+                onChange={(e) => setPublished(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-600 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-offset-zinc-950"
+              />
+              <label htmlFor="build-published" className="text-sm text-zinc-700 dark:text-zinc-300">Publish this build (visible to others)</label>
+            </div>
+          )}
         </div>
       </div>
 
@@ -541,13 +567,15 @@ export function BuildCreator({ items, heroes }: { items: UpgradeItemV2[], heroes
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/50">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Your Build</h2>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? 'Saving...' : 'Save Build'}
-          </button>
+          {isOwner && (
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="rounded-md bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? 'Saving...' : 'Save Build'}
+            </button>
+          )}
         </div>
         <div className="flex flex-col gap-4">
           {BUILD_SECTIONS.map((section) => {
@@ -612,48 +640,50 @@ export function BuildCreator({ items, heroes }: { items: UpgradeItemV2[], heroes
       </div>
 
       {/* Item Catalog (Bottom) */}
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/50">
-        <h2 className="mb-4 text-xl font-bold text-zinc-900 dark:text-zinc-50">Select Items</h2>
-        <div className="flex flex-col gap-6">
-          {catalog.map((group) => {
-            const theme = resolveSlotTheme(group.slot);
-            return (
-              <CollapsibleSection
-                key={group.slot}
-                title={group.displayName}
-                countLabel={`${group.totalCount} item${group.totalCount === 1 ? '' : 's'}`}
-                defaultOpen
-                level="slot"
-                slotTheme={theme}
-              >
-                <div className="flex flex-col gap-3 pl-0 sm:pl-1">
-                  {group.costGroups.map((costGroup) => (
-                    <CollapsibleSection
-                      key={`${group.slot}-${costGroup.cost}`}
-                      title={formatSouls(costGroup.cost)}
-                      countLabel={`${costGroup.items.length} item${costGroup.items.length === 1 ? '' : 's'}`}
-                      defaultOpen
-                      level="cost"
-                      slotTheme={theme}
-                      cost={costGroup.cost}
-                    >
-                      <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                        {costGroup.items.map((item) => (
-                          <SelectableItemCard
-                            key={item.id}
-                            item={item}
-                            onClick={() => handleAddItem(item)}
-                          />
-                        ))}
-                      </ul>
-                    </CollapsibleSection>
-                  ))}
-                </div>
-              </CollapsibleSection>
-            )
-          })}
+      {isOwner && (
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/50">
+          <h2 className="mb-4 text-xl font-bold text-zinc-900 dark:text-zinc-50">Select Items</h2>
+          <div className="flex flex-col gap-6">
+            {catalog.map((group) => {
+              const theme = resolveSlotTheme(group.slot);
+              return (
+                <CollapsibleSection
+                  key={group.slot}
+                  title={group.displayName}
+                  countLabel={`${group.totalCount} item${group.totalCount === 1 ? '' : 's'}`}
+                  defaultOpen
+                  level="slot"
+                  slotTheme={theme}
+                >
+                  <div className="flex flex-col gap-3 pl-0 sm:pl-1">
+                    {group.costGroups.map((costGroup) => (
+                      <CollapsibleSection
+                        key={`${group.slot}-${costGroup.cost}`}
+                        title={formatSouls(costGroup.cost)}
+                        countLabel={`${costGroup.items.length} item${costGroup.items.length === 1 ? '' : 's'}`}
+                        defaultOpen
+                        level="cost"
+                        slotTheme={theme}
+                        cost={costGroup.cost}
+                      >
+                        <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                          {costGroup.items.map((item) => (
+                            <SelectableItemCard
+                              key={item.id}
+                              item={item}
+                              onClick={() => handleAddItem(item)}
+                            />
+                          ))}
+                        </ul>
+                      </CollapsibleSection>
+                    ))}
+                  </div>
+                </CollapsibleSection>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

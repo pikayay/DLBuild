@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
+import SignOutButton from '@/app/components/SignOutButton'
 
 const links = [
   { href: '/deadlock/items', label: 'Items' },
@@ -21,11 +22,13 @@ export default function DeadlockLayout({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 bg-gray-800 text-white">
+      <aside className="w-64 bg-gray-800 text-white flex flex-col h-screen sticky top-0">
         <div className="p-4">
-          <h2 className="text-2xl font-bold">Deadlock App</h2>
+          <Link href="/">
+            <h2 className="text-2xl font-bold hover:text-gray-300 transition-colors">Deadlock App</h2>
+          </Link>
         </div>
-        <nav>
+        <nav className="flex-1 overflow-y-auto">
           <ul>
             {links.map((link) => (
               <li key={link.href}>
@@ -44,8 +47,11 @@ export default function DeadlockLayout({
             ))}
           </ul>
         </nav>
+        <div className="p-4 mt-auto border-t border-gray-700">
+          <SignOutButton />
+        </div>
       </aside>
-      <main className="flex-1 p-8">{children}</main>
+      <main className="flex-1 p-8 min-w-0">{children}</main>
     </div>
   )
 }
