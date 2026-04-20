@@ -330,7 +330,7 @@ function ItemMiniCard({ item, onClick, onRemove }: { item: UpgradeItemV2; onClic
   return (
     <div
       onClick={onClick}
-      className={`group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-md border-2 bg-zinc-800/80 p-1 transition-all hover:scale-105 hover:brightness-110 ${themeBorders[theme]} w-16 h-20 sm:w-20 sm:h-24`}
+      className={`group relative flex ${onClick || onRemove ? 'cursor-pointer' : 'cursor-default'} flex-col items-center justify-center overflow-hidden rounded-md border-2 bg-zinc-800/80 p-1 transition-all hover:scale-105 hover:brightness-110 ${themeBorders[theme]} w-16 h-20 sm:w-20 sm:h-24`}
       title={item.name}
     >
       <div className="relative h-10 w-10 sm:h-12 sm:w-12">
@@ -579,17 +579,17 @@ export function BuildCreator({
         </div>
         <div className="flex flex-col gap-4">
           {BUILD_SECTIONS.map((section) => {
-            const isActive = activeSectionId === section.id
+            const isActive = isOwner && activeSectionId === section.id
             const sectionItems = buildItems[section.id]
 
             return (
               <div
                 key={section.id}
-                onClick={() => setActiveSectionId(section.id)}
-                className={`flex flex-col gap-2 rounded-lg border-2 p-3 transition-colors cursor-pointer ${
+                onClick={() => isOwner && setActiveSectionId(section.id)}
+                className={`flex flex-col gap-2 rounded-lg border-2 p-3 transition-colors ${isOwner ? 'cursor-pointer' : ''} ${
                   isActive
                     ? 'border-violet-500 bg-violet-50/50 dark:border-violet-600 dark:bg-violet-900/20'
-                    : 'border-zinc-200 hover:border-violet-300 dark:border-zinc-700 dark:hover:border-violet-800'
+                    : `border-zinc-200 dark:border-zinc-700 ${isOwner ? 'hover:border-violet-300 dark:hover:border-violet-800' : ''}`
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -613,7 +613,7 @@ export function BuildCreator({
                         exit={{ opacity: 0 }}
                         className="flex h-20 w-full items-center justify-center text-sm text-zinc-400 italic"
                       >
-                        Click items below to add to {section.name}
+                        {isOwner ? `Click items below to add to ${section.name}` : `No items in ${section.name}`}
                       </motion.div>
                     ) : (
                       sectionItems.map((item, idx) => (
@@ -626,7 +626,7 @@ export function BuildCreator({
                         >
                           <ItemMiniCard
                             item={item}
-                            onRemove={() => handleRemoveItem(section.id, idx)}
+                            onRemove={isOwner ? () => handleRemoveItem(section.id, idx) : undefined}
                           />
                         </motion.div>
                       ))

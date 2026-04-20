@@ -31,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Updated the title and description of the app.
 
 ### Fixed
+- Prevented non-owners from incorrectly modifying items inside other users' builds locally on the frontend by locking down the `BuildCreator` component interaction state.
 - Stripped embedded `<img>` and `<svg>` tags from hero ability descriptions to prevent them from misaligning with the surrounding text layout.
 - Fixed an issue where hero ability upgrades would incorrectly appear blank if the API was missing a handwritten description. Abilities now automatically generate formatted descriptions from their underlying `property_upgrades` and `properties` metadata as a fallback.
 - Fixed an "Error in input stream" crash on the individual build page when submitting a new comment. Replaced an abrupt `window.location.reload()` with a seamless Next.js Server Action data refresh.
