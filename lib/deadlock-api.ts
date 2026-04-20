@@ -86,6 +86,12 @@ export interface Build {
   description: string
   items: Record<string, UpgradeItemV2[]>
   published: boolean
+  author?: {
+    id: string
+    username: string | null
+    full_name: string | null
+    avatar_url: string | null
+  }
 }
 
 /** Hero roster entry from `GET /v2/heroes` (Assets API). */

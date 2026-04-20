@@ -2,6 +2,7 @@ import { fetchBuilds } from './actions'
 import { Build, getHeroes } from '@/lib/deadlock-api'
 import { resolveSlotTheme } from '@/lib/deadlock-item-groups'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default async function BuildsPage() {
   const [builds, { heroes }] = await Promise.all([
@@ -54,17 +55,31 @@ export default async function BuildsPage() {
               dominantTheme = Object.keys(counts).reduce((a, b) => counts[a as keyof typeof counts] > counts[b as keyof typeof counts] ? a : b) as 'spirit' | 'weapon' | 'vitality' | 'default'
             }
 
+            const authorName = build.author?.username || build.author?.full_name || 'Anonymous'
+
             return (
               <li key={build.id}>
                 <Link href={`/deadlock/builds/${build.id}`} className={`block overflow-hidden border rounded-xl transition-all shadow-sm ${themeStyles[dominantTheme]}`}>
-                  <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider ${themeBanner[dominantTheme]}`}>
-                    {heroName}
+                  <div className={`px-4 py-1 text-xs font-bold uppercase tracking-wider flex justify-between items-center ${themeBanner[dominantTheme]}`}>
+                    <span>{heroName}</span>
                   </div>
-                  <div className="p-4">
+                  <div className="p-4 flex flex-col h-full">
                     <h2 className="text-xl font-bold text-zinc-100 mb-1">{build.name}</h2>
                     <p className="text-sm text-zinc-400 line-clamp-2 h-10 mb-4">{build.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-md ${build.published ? 'bg-emerald-500/20 text-emerald-300' : 'bg-zinc-800 text-zinc-400'}`}>
+                    <div className="flex items-center justify-between mt-auto">
+                      <div className="flex items-center gap-2">
+                        <div className="relative h-6 w-6 overflow-hidden rounded-full bg-zinc-800">
+                          {build.author?.avatar_url ? (
+                            <Image src={build.author.avatar_url} alt={authorName} fill className="object-cover" unoptimized />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-zinc-500">
+                              {authorName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs text-zinc-300 font-medium">{authorName}</span>
+                      </div>
+                      <span className={`text-[10px] font-semibold px-2 py-1 rounded-md ${build.published ? 'bg-emerald-500/20 text-emerald-300' : 'bg-zinc-800 text-zinc-400'}`}>
                         {build.published ? 'Published' : 'Draft'}
                       </span>
                     </div>

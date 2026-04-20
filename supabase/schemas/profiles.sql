@@ -4,6 +4,7 @@ create extension if not exists moddatetime schema extensions;
 create table public.profiles (
   id uuid not null references auth.users on delete cascade,
   email text,
+  username text unique,
   full_name text,
   avatar_url text,
   bio text,
@@ -16,8 +17,8 @@ create table public.profiles (
 alter table public.profiles
   enable row level security;
 
-create policy "Users can view their own profile." on public.profiles
-  for select using (auth.uid() = id);
+create policy "Public profiles are viewable by everyone." on public.profiles
+  for select using (true);
 
 create policy "Users can insert their own profile." on public.profiles
   for insert with check (auth.uid() = id);

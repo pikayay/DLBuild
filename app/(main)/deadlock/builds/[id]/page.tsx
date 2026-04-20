@@ -1,8 +1,10 @@
 import { BuildCreator } from '@/app/components/deadlock/BuildCreator'
+import { BuildSocials } from '@/app/components/deadlock/BuildSocials'
 import { getItems, getHeroes } from '@/lib/deadlock-api'
-import { getBuild } from '@/app/(main)/deadlock/builds/actions'
+import { getBuild, getLikesCount, hasUserLiked, fetchComments } from '@/app/(main)/deadlock/builds/actions'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -28,8 +30,18 @@ export default async function ViewBuildPage({ params }: { params: Promise<{ id: 
   const [
     { items, error: itemsError },
     { heroes, error: heroesError },
-    build
-  ] = await Promise.all([getItems(), getHeroes(), getBuild(id)])
+    build,
+    initialLikes,
+    initialHasLiked,
+    initialComments,
+  ] = await Promise.all([
+    getItems(), 
+    getHeroes(), 
+    getBuild(id),
+    getLikesCount(id),
+    hasUserLiked(id),
+    fetchComments(id)
+  ])
 
   const error = itemsError || heroesError
 
@@ -38,6 +50,7 @@ export default async function ViewBuildPage({ params }: { params: Promise<{ id: 
   }
 
   const isOwner = user?.id === build.user_id
+  const authorName = build.author?.username || build.author?.full_name || 'Anonymous'
 
   return (
     <div className="mx-auto max-w-5xl w-full">
@@ -50,15 +63,33 @@ export default async function ViewBuildPage({ params }: { params: Promise<{ id: 
         </Link>
       </div>
 
-      <header className="mb-8 text-center sm:text-left">
-        <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
-          {isOwner ? 'Edit Build' : 'View Build'}
-        </h1>
-        {isOwner && (
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            You can modify your build and save changes.
-          </p>
-        )}
+      <header className="mb-8 text-center sm:text-left flex flex-col sm:flex-row sm:justify-between sm:items-start">
+        <div>
+          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">
+            {isOwner ? 'Edit Build' : 'View Build'}
+          </h1>
+          {isOwner && (
+            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+              You can modify your build and save changes.
+            </p>
+          )}
+        </div>
+
+        <div className="mt-4 sm:mt-0 flex items-center gap-3 bg-zinc-50 dark:bg-zinc-900/50 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+            {build.author?.avatar_url ? (
+              <Image src={build.author.avatar_url} alt={authorName} fill className="object-cover" unoptimized />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs font-bold text-zinc-500">
+                {authorName.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="text-xs text-zinc-500">Created by</span>
+            <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">{authorName}</span>
+          </div>
+        </div>
       </header>
 
       {error ? (
@@ -72,7 +103,27 @@ export default async function ViewBuildPage({ params }: { params: Promise<{ id: 
       ) : items.length === 0 ? (
         <p className="text-center text-zinc-500">No items returned.</p>
       ) : (
-        <BuildCreator items={items} heroes={heroes} initialBuild={build} isOwner={isOwner} />
+        <>
+          <BuildCreator items={items} heroes={heroes} initialBuild={build} isOwner={isOwner} />
+          {!isOwner && (
+            <BuildSocials 
+              buildId={id} 
+              initialLikes={initialLikes} 
+              initialHasLiked={initialHasLiked} 
+              initialComments={initialComments} 
+              isLoggedIn={!!user} 
+            />
+          )}
+          {isOwner && (
+            <BuildSocials 
+              buildId={id} 
+              initialLikes={initialLikes} 
+              initialHasLiked={initialHasLiked} 
+              initialComments={initialComments} 
+              isLoggedIn={!!user} 
+            />
+          )}
+        </>
       )}
     </div>
   )

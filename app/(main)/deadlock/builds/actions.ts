@@ -15,6 +15,7 @@ export async function createBuild(data: {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   
   if (authError || !user) {
+    console.error('createBuild Auth Error:', authError || 'No user found')
     return { error: 'Unauthorized' }
   }
 
@@ -32,7 +33,7 @@ export async function createBuild(data: {
     .single()
 
   if (error) {
-    console.error('Error creating build:', error)
+    console.error('Error creating build:', error?.message || error)
     return { error: error.message }
   }
 
@@ -44,11 +45,11 @@ export async function fetchBuilds() {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('builds')
-    .select('*')
+    .select('*, author:profiles!builds_user_id_fkey(id, username, full_name, avatar_url)')
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('Error fetching builds:', error)
+    console.error('Error fetching builds:', error?.message || error)
     return []
   }
 
@@ -59,7 +60,7 @@ export async function getBuild(id: string) {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('builds')
-    .select('*')
+    .select('*, author:profiles!builds_user_id_fkey(id, username, full_name, avatar_url)')
     .eq('id', id)
     .single()
 
@@ -108,4 +109,85 @@ export async function updateBuild(id: string, data: {
   revalidatePath('/deadlock/builds')
   revalidatePath(`/deadlock/builds/${id}`)
   return { build }
+}
+
+export async function toggleLike(buildId: string, isLiked: boolean) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  if (isLiked) {
+    const { error } = await supabase
+      .from('build_likes')
+      .delete()
+      .eq('build_id', buildId)
+      .eq('user_id', user.id)
+    if (error) return { error: error.message }
+  } else {
+    const { error } = await supabase
+      .from('build_likes')
+      .insert({ build_id: buildId, user_id: user.id })
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath(`/deadlock/builds/${buildId}`)
+  return { success: true }
+}
+
+export async function getLikesCount(buildId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { count, error } = await supabase
+    .from('build_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('build_id', buildId)
+  if (error) return 0
+  return count || 0
+}
+
+export async function hasUserLiked(buildId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+
+  const { data, error } = await supabase
+    .from('build_likes')
+    .select('*')
+    .eq('build_id', buildId)
+    .eq('user_id', user.id)
+    .single()
+
+  return !!data && !error
+}
+
+export async function postComment(buildId: string, content: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'Unauthorized' }
+
+  const { error } = await supabase
+    .from('build_comments')
+    .insert({
+      build_id: buildId,
+      user_id: user.id,
+      content
+    })
+
+  if (error) return { error: error.message }
+  revalidatePath(`/deadlock/builds/${buildId}`)
+  return { success: true }
+}
+
+export async function fetchComments(buildId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('build_comments')
+    .select('*, author:profiles!build_comments_user_id_fkey(id, username, full_name, avatar_url)')
+    .eq('build_id', buildId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching comments:', error)
+    return []
+  }
+  return data
 }

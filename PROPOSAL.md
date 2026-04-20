@@ -60,3 +60,7 @@ If anything, the experience of working under that instability will be valuable f
 ### Notes
 - Working on this solo.
 - Praying I haven't drastically overestimated my capabilities and free time to work on this.
+
+
+### TODO
+- add a Tips and Tricks page

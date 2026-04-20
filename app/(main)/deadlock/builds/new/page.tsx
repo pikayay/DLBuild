@@ -25,8 +25,8 @@ export default async function NewBuildPage() {
         <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50">Create Build</h1>
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
           Click on a section in your build to activate it, then click on items in the catalog to add them to that section.
-          <p>Keep in mind that the 9,999 tier 5 legendary items are only accessible in Street Brawl.</p>
         </p>
+        <p>Keep in mind that the 9,999 tier 5 legendary items are only accessible in Street Brawl.</p>
       </header>
 
       {error ? (

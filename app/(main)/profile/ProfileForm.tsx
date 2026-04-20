@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
-export default function ProfileForm({ user, profile }: { user: { id: string }, profile: { bio?: string, avatar_url?: string } }) {
+export default function ProfileForm({ user, profile }: { user: { id: string }, profile: { bio?: string, avatar_url?: string, username?: string } }) {
   const supabase = createSupabaseClient()
+  const [username, setUsername] = useState(profile?.username || '')
   const [bio, setBio] = useState(profile?.bio || '')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null)
   const [uploading, setUploading] = useState(false)
@@ -20,11 +21,17 @@ export default function ProfileForm({ user, profile }: { user: { id: string }, p
       setMessage('')
       const { error } = await supabase.from('profiles').upsert({
         id: user.id,
+        username: username || null, // send null if empty so it doesn't fail unique constraint if multiple are empty strings, though we might want to just trim
         bio,
         avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       })
-      if (error) throw error
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('Username is already taken.')
+        }
+        throw error
+      }
       setMessage('Profile updated successfully!')
     } catch (error: unknown) {
       setErrorMsg(error instanceof Error ? error.message : 'Error updating profile')
@@ -74,7 +81,7 @@ export default function ProfileForm({ user, profile }: { user: { id: string }, p
       <div className="flex flex-col sm:flex-row items-center gap-6">
         <div className="relative w-32 h-32 shrink-0 rounded-full overflow-hidden bg-gray-800 border-2 border-gray-700 shadow-inner">
           {avatarUrl ? (
-            <Image src={avatarUrl} alt="Avatar" width={128} height={128} className="object-cover w-full h-full" />
+            <Image src={avatarUrl} alt="Avatar" width={128} height={128} className="object-cover w-full h-full" unoptimized />
           ) : (
             <div className="flex items-center justify-center w-full h-full text-gray-500 font-medium">No PFP</div>
           )}
@@ -98,6 +105,18 @@ export default function ProfileForm({ user, profile }: { user: { id: string }, p
             />
           </div>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2 mt-4">
+        <label htmlFor="username" className="text-sm font-medium text-gray-300">Username</label>
+        <input
+          type="text"
+          id="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full p-3 rounded-md bg-gray-950 border border-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+          placeholder="Enter a unique username..."
+        />
       </div>
 
       <div className="flex flex-col gap-2 mt-4">
