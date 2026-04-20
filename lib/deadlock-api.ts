@@ -46,7 +46,13 @@ export interface DeadlockItemBase {
 export interface AbilityItemV2 extends DeadlockItemBase {
   type: 'ability'
   description: AbilityDescriptionV2
-  upgrades?: Record<string, unknown>[]
+  properties?: Record<string, unknown>
+  upgrades?: {
+    property_upgrades?: {
+      name: string
+      bonus: string | number
+    }[]
+  }[]
 }
 
 export interface WeaponItemV2 extends DeadlockItemBase {
@@ -151,6 +157,12 @@ export interface HeroesFetchResult {
 
 function stripTags(html: string): string {
   return html.replace(/<[\s\S]*?>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+/** Removes <img> and <svg> tags but leaves formatting tags (like spans, bold, etc) intact for innerHTML usage. */
+export function removeEmbeddedIcons(html: string): string {
+  if (!html) return ''
+  return html.replace(/<img[^>]*>/gi, '').replace(/<svg[\s\S]*?<\/svg>/gi, '').trim()
 }
 
 function truncate(s: string, max: number): string {

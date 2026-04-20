@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getHeroBySlug, getHeroPortraitUrl, getHeroAbilities } from '@/lib/deadlock-api'
+import { getHeroBySlug, getHeroPortraitUrl, getHeroAbilities, removeEmbeddedIcons } from '@/lib/deadlock-api'
 import { heroDetailHref } from '@/lib/deadlock-hero-slug'
 
 type PageProps = {
@@ -193,16 +193,39 @@ export default async function HeroDetailPage({ params }: PageProps) {
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">{ability.name}</h3>
                   {ability.description?.desc && (
-                    <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300" dangerouslySetInnerHTML={{ __html: ability.description.desc }} />
+                    <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300" dangerouslySetInnerHTML={{ __html: removeEmbeddedIcons(ability.description.desc) }} />
                   )}
                   <div className="mt-4 grid gap-2 sm:grid-cols-3">
                     {['t1_desc', 't2_desc', 't3_desc'].map((tier, i) => {
-                      const desc = ability.description?.[tier as keyof typeof ability.description]
+                      let desc = ability.description?.[tier as keyof typeof ability.description]
+                      
+                      if (!desc) {
+                        const props = ability.upgrades?.[i]?.property_upgrades
+                        if (props && props.length > 0) {
+                          desc = props.map(u => {
+                            const propDef = ability.properties?.[u.name] as { label?: string, prefix?: string, postfix?: string } | undefined
+                            let val = String(u.bonus)
+                            if (propDef?.prefix && propDef.prefix !== '{s:sign}') {
+                              if (propDef.prefix === '-' && !val.startsWith('-')) {
+                                val = '-' + val
+                              } else if (propDef.prefix !== '-') {
+                                val = propDef.prefix + val
+                              }
+                            } else if (!val.startsWith('-') && !val.startsWith('+')) {
+                              val = '+' + val
+                            }
+                            const postfix = propDef?.postfix || ''
+                            const label = propDef?.label || u.name
+                            return `<span class="highlight">${val}${postfix}</span> ${label}`
+                          }).join(' and ')
+                        }
+                      }
+
                       if (!desc) return null
                       return (
                         <div key={tier} className="bg-zinc-200/50 dark:bg-zinc-950/50 p-2 rounded-md text-xs text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800">
                           <span className="font-bold mr-1">T{i + 1}</span>
-                          <span dangerouslySetInnerHTML={{ __html: desc }} />
+                          <span dangerouslySetInnerHTML={{ __html: removeEmbeddedIcons(desc) }} />
                         </div>
                       )
                     })}
