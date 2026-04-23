@@ -10,6 +10,7 @@ const links = [
   { href: '/deadlock/builds', label: 'Builds' },
   { href: '/deadlock/heroes', label: 'Heroes' },
   { href: '/deadlock/minimap', label: 'Minimap' },
+  { href: '/deadlock/ai-summary', label: 'AI Summary' },
   { href: '/profile', label: 'Profile' },
 ]
 
