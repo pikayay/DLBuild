@@ -54,8 +54,8 @@ const HOTSPOTS: Hotspot[] = [
   },
   {
     id: 'guardian',
-    x: 48.8,
-    y: 41.3,
+    x: 48.7,
+    y: 41.6,
     title: 'Guardian',
     description: 'These icons indicate Guardians, basic towers that guard lanes. Taking these down is the goal of the laning phase.',
   },
@@ -79,6 +79,13 @@ const HOTSPOTS: Hotspot[] = [
     y: 11.7,
     title: 'Shrine',
     description: 'Each base has two shrines on either side that protect the Patron from being attacked. These must be destroyed to damage the Patron, and knocking down both of them buffs the team\'s minions.',
+  },
+  {
+    id: 'patron',
+    x: 50.1,
+    y: 9,
+    title: 'Patron',
+    description: 'The final boss of the game that must be killed to win. Cannot be damaged until the shrines fall. The Patron itself has two phases.',
   },
   {
     id: 't1-camp',
@@ -144,9 +151,8 @@ export default function MinimapPage() {
                 onMouseLeave={() => setActiveHotspot(null)}
               >
                 {/* Hotspot Marker (e.g., a pulsing dot) */}
-                <div className="w-full h-full rounded-full bg-amber-500/50 border-2 border-amber-400 flex items-center justify-center relative shadow-[0_0_15px_rgba(251,191,36,0.5)]">
-                  <span className="absolute w-full h-full rounded-full bg-amber-400 opacity-75 animate-ping" />
-                  <span className="relative w-2 h-2 rounded-full bg-white shadow-sm" />
+                <div className="w-full h-full rounded-full bg-amber-500/10 border-2 border-amber-400 flex items-center justify-center relative shadow-[0_0_15px_rgba(251,191,36,0.5)]">
+                  <span className="absolute w-full h-full rounded-full border-2 border-amber-400 opacity-50 animate-ping" />
                 </div>
 
                 {/* Tooltip */}
