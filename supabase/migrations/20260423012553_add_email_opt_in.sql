@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN email_opt_in BOOLEAN DEFAULT false;

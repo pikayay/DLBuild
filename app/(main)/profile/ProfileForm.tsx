@@ -4,11 +4,12 @@ import { useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 
-export default function ProfileForm({ user, profile }: { user: { id: string }, profile: { bio?: string, avatar_url?: string, username?: string } }) {
+export default function ProfileForm({ user, profile }: { user: { id: string }, profile: { bio?: string, avatar_url?: string, username?: string, email_opt_in?: boolean } }) {
   const supabase = createSupabaseClient()
   const [username, setUsername] = useState(profile?.username || '')
   const [bio, setBio] = useState(profile?.bio || '')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null)
+  const [emailOptIn, setEmailOptIn] = useState(profile?.email_opt_in || false)
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -24,6 +25,7 @@ export default function ProfileForm({ user, profile }: { user: { id: string }, p
         username: username || null, // send null if empty so it doesn't fail unique constraint if multiple are empty strings, though we might want to just trim
         bio,
         avatar_url: avatarUrl,
+        email_opt_in: emailOptIn,
         updated_at: new Date().toISOString(),
       })
       if (error) {
@@ -130,6 +132,19 @@ export default function ProfileForm({ user, profile }: { user: { id: string }, p
           placeholder="Tell us about yourself..."
         />
         <p className="text-xs text-gray-500 text-right">{bio.length} characters</p>
+      </div>
+
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          type="checkbox"
+          id="emailOptIn"
+          checked={emailOptIn}
+          onChange={(e) => setEmailOptIn(e.target.checked)}
+          className="w-4 h-4 rounded border-gray-800 bg-gray-950 text-blue-600 focus:ring-blue-500/50"
+        />
+        <label htmlFor="emailOptIn" className="text-sm font-medium text-gray-300">
+          Receive weekly email updates
+        </label>
       </div>
 
       <div className="flex justify-end mt-4">

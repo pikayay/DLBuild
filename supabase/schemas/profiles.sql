@@ -8,6 +8,7 @@ create table public.profiles (
   full_name text,
   avatar_url text,
   bio text,
+  email_opt_in boolean default false,
   updated_at timestamp with time zone,
   primary key (id)
 );
