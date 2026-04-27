@@ -26,7 +26,7 @@ export default async function NewBuildPage() {
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
           Click on a section in your build to activate it, then click on items in the catalog to add them to that section.
         </p>
-        <p>Keep in mind that the 9,999 tier 5 legendary items are only accessible in Street Brawl.</p>
+        <p>Keep in mind that the 9,999 soul cost tier 5 items are only accessible in Street Brawl.</p>
       </header>
 
       {error ? (
